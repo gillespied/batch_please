@@ -1,12 +1,16 @@
 from setuptools import find_packages, setup
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+
 setup(
     name="batch_processors",
     version="0.1.0",
     author="David Gillespie",
     author_email="davidjamesgillespie@gmail.com",
     description="A package for batch processing with sync and async capabilities",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/gillespied/batch_please",
     packages=find_packages(where="src"),
@@ -18,15 +22,16 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "asyncio",
         "tqdm",
     ],
     extras_require={
         "dev": [
-            "setuptools",
-            "wheel",
             "pytest",
             "pytest-asyncio",
+            "mkdocs",
+            "mkdocs-material",
+            "mkdocstrings[python]",
+            "pre-commit",
         ],
     },
 )
