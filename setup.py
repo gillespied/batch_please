@@ -19,6 +19,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "asyncio",
+        "tqdm",
     ],
     extras_require={
         "dev": [
