@@ -31,7 +31,7 @@ class BatchProcessor:
         self,
         process_func: Callable[[str], Any],
         batch_size: int = 100,
-        pickle_file: str = "progress.pickle",
+        pickle_file: Optional[str] = None,
         logfile: Optional[str] = None,
     ):
         self.process_func = process_func
@@ -63,7 +63,8 @@ class BatchProcessor:
         self.processed_items.extend(batch)
         self.results.extend(batch_results)
 
-        self.save_progress()
+        if self.pickle_file:
+            self.save_progress()
 
         completion_message = f"Batch {batch_number} completed. Total processed: {len(self.processed_items)}/{total_jobs}"
         print(completion_message)
@@ -114,7 +115,7 @@ class AsyncBatchProcessor(BatchProcessor):
         self,
         process_func: Callable[[str], Any],
         batch_size: int = 100,
-        pickle_file: str = "progress.pickle",
+        pickle_file: Optional[str] = None,
         logfile: Optional[str] = None,
         max_concurrent: Optional[int] = None,
     ):
@@ -145,7 +146,9 @@ class AsyncBatchProcessor(BatchProcessor):
         self.processed_items.extend(batch)
         self.results.extend(batch_results)
 
-        self.save_progress()
+        if self.pickle_file:
+            self.save_progress()
+
         self.logger.info(
             f"Batch {batch_number} completed. Total processed: {len(self.processed_items)}/{total_jobs}"
         )
