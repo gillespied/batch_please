@@ -1,0 +1,2 @@
+asyncio
+tqdm>=4.60.0
