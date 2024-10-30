@@ -87,33 +87,68 @@ class BatchProcessor:
 
 
 class AsyncBatchProcessor(BatchProcessor):
+    """
+    # Example usage
+    async def example_process_single_item(string: str) -> str:
+        sleep_time = random.uniform(2, 2.5)
+        time.sleep(sleep_time)
+        return f"Processed: {string} (took {sleep_time:.2f} seconds)"
+
+    def main():
+        input_items = [f"string{i + 1}" for i in range(10)]
+
+        processor = AsyncBatchProcessor(
+            process_func=example_process_single_item,
+            batch_size=100,
+            logfile="example.log",
+            max_concurrent=5  # Limit to 5 concurrent operations
+        )
+
+        processed_items, results = processor.process_items_in_batches(input_items)
+        print(f"All processing complete. Total processed: {len(processed_items)}")
+
+    main()
+    """
+
     def __init__(
         self,
         process_func: Callable[[str], Any],
         batch_size: int = 100,
         pickle_file: str = "progress.pickle",
         logfile: Optional[str] = None,
+        max_concurrent: Optional[int] = None,
     ):
         super().__init__(process_func, batch_size, pickle_file, logfile)
+        self.semaphore = (
+            asyncio.Semaphore(max_concurrent) if max_concurrent is not None else None
+        )
 
     async def process_item(self, job_number: int, string: str):
-        result = await self.process_func(string)
-        self.logger.info(f"Processed job {job_number}: {string}")
-        return result
+        async def _process():
+            result = await self.process_func(string)
+            self.logger.info(f"Processed job {job_number}: {string}")
+            return result
+
+        if self.semaphore:
+            async with self.semaphore:
+                return await _process()
+        else:
+            return await _process()
 
     async def process_batch(self, batch: List[str], batch_number: int, total_jobs: int):
-        batch_results = await asyncio.gather(
-            *[self.process_item(i, s) for i, s in enumerate(batch)]
-        )
+        tasks = [
+            self.process_item(i + (batch_number - 1) * self.batch_size, s)
+            for i, s in enumerate(batch)
+        ]
+        batch_results = await asyncio.gather(*tasks)
 
         self.processed_items.extend(batch)
         self.results.extend(batch_results)
 
         self.save_progress()
-
-        completion_message = f"Batch {batch_number} completed. Total processed: {len(self.processed_items)}/{total_jobs}"
-        print(completion_message)
-        self.logger.info(completion_message)
+        self.logger.info(
+            f"Batch {batch_number} completed. Total processed: {len(self.processed_items)}/{total_jobs}"
+        )
 
     async def process_items_in_batches(self, input_items: List[str]):
         total_jobs = len(input_items)
