@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import pickle
-from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
 

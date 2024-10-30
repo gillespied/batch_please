@@ -1,5 +1,4 @@
 import asyncio
-import os
 from typing import List
 
 import pytest
@@ -39,7 +38,7 @@ def test_batch_processor_init():
     """
     processor = BatchProcessor(sync_process_func, batch_size=10, use_tqdm=True)
     assert processor.batch_size == 10
-    assert processor.use_tqdm == True
+    assert processor.use_tqdm
     assert callable(processor.process_func)
 
 
