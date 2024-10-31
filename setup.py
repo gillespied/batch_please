@@ -8,7 +8,7 @@ setup(
     name="batch_processors",
     version="0.1.0",
     author="David Gillespie",
-    author_email="davidjamesgillespie@gmail.com",
+    author_email="git.atypical244@slmail.me",
     description="A package for batch processing with sync and async capabilities",
     long_description=long_description,
     long_description_content_type="text/markdown",
