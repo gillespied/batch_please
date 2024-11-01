@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 
 setup(
-    name="batch_processors",
+    name="batch_please",
     version="0.1.0",
     author="David Gillespie",
     author_email="git.atypical244@slmail.me",

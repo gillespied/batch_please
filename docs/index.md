@@ -14,7 +14,7 @@ A flexible and efficient Python library for processing large datasets in batches
 ## Installation
 
 ```bash
-pip install batch-processor  
+pip install batch_please
 ```
 
 ## Quick Start
@@ -22,7 +22,7 @@ pip install batch-processor
 ### Synchronous Processing
 
 ```python
-from batch_processor import BatchProcessor
+from batch_processors import BatchProcessor
 
 def process_func(item):
     return f"Processed: {item}"
@@ -41,7 +41,7 @@ processed_items, results = processor.process_items_in_batches(input_data)
 
 ```python
 import asyncio
-from batch_processor import AsyncBatchProcessor
+from batch_processors import AsyncBatchProcessor
 
 async def async_process_func(item):
     await asyncio.sleep(0.1)

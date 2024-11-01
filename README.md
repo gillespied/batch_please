@@ -14,7 +14,7 @@ A flexible and efficient Python library for processing large datasets in batches
 ## Installation
 
 ```bash
-pip install batch-processor  
+pip install batch_please  
 ```
 
 ## Quick Start
@@ -83,3 +83,5 @@ processor = BatchProcessor(
     logfile="processing.log"
 )
 ```
+
+Further [Documentation](https://gillespied.github.io/batch_please/)
