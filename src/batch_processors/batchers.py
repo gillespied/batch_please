@@ -33,7 +33,7 @@ class BatchProcessor(Generic[T, R]):
         process_func: Callable[[T], R],
         batch_size: int = 100,
         pickle_file: Optional[str] = None,
-        logfile: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
         recover_from_checkpoint: bool = False,
         use_tqdm: bool = False,
     ):
@@ -57,16 +57,13 @@ class BatchProcessor(Generic[T, R]):
         self.use_tqdm = use_tqdm
 
         # Set up logging
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-        self.logger.handlers = []  # Clear any existing handlers
-        formatter = logging.Formatter("%(asctime)s - %(message)s")
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
+            self.logger.addHandler(logging.NullHandler())
 
-        # File handler (if logfile is provided)
-        if logfile:
-            file_handler = logging.FileHandler(logfile)
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
+        self.logger.info("Initiated Logging.")
 
         # Recover from checkpoint if enabled
         if self.recover_from_checkpoint:

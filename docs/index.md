@@ -77,9 +77,11 @@ processor = BatchProcessor(
 ### Logging
 
 ```python
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("foo")
 processor = BatchProcessor(
     process_func=process_func,
     batch_size=100,
-    logfile="processing.log"
+    logging=logger
 )
 ```
