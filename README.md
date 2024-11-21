@@ -41,7 +41,7 @@ processed_items, results = processor.process_items_in_batches(input_data)
 
 ```python
 import asyncio
-from batch_processor import AsyncBatchProcessor
+from batch_processors import AsyncBatchProcessor
 
 async def async_process_func(item):
     await asyncio.sleep(0.1)
