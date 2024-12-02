@@ -1,8 +1,0 @@
-setuptools
-wheel
-pytest
-pytest-asyncio
-mkdocs
-mkdocs-material
-mkdocstrings[python]
-pre-commit

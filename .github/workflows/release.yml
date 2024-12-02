@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # This ensures all tags are fetched
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -25,16 +27,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        pip install .[dev]
+        python -m pip install --upgrade pip
+        pip install build twine
 
     - name: Build package
       run: python -m build
 
+    - name: Check the built package
+      run: twine check dist/*
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
-      env:
-        TWINE_USERNAME: "__token__"
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}  
