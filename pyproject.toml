@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "batch_please"
+authors = [
+    {name = "David Gillespie", email = "git.atypical244@slmail.me"},
+]
+description = "A package for batch processing with sync and async capabilities"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dynamic = ["version"]
+dependencies = [
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "pytest",
+    "pytest-asyncio",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "pre-commit",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/gillespied/batch_please"
+"Bug Tracker" = "https://github.com/gillespied/batch_please/issues"
+
+[tool.setuptools_scm]
+write_to = "src/batch_please/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+
+[tool.setuptools.packages.find]
+where = ["src"]

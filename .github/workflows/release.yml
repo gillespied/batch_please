@@ -30,11 +30,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install build twine
 
+    - name: Check directory contents
+      run: |
+        pwd
+        ls -la
+
     - name: Build package
-      run: python -m build
+      run: python -m build --sdist --wheel --outdir dist/
+
+    - name: List built distributions
+      run: ls -l dist/
 
     - name: Check the built package
       run: twine check dist/*
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: dist/
+        verbose: true
