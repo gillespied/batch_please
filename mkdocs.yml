@@ -21,4 +21,4 @@ plugins:
             show_source: true
 
 watch:
-  - src/batch_processors
+  - src/batch_please
