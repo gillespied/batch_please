@@ -93,11 +93,11 @@ async def test_async_batch_processor_process_items(input_data):
     asynchronously and returns the expected results.
     """
     processor = AsyncBatchProcessor(async_process_func, batch_size=10)
-    processed_items, results = await processor.process_items_in_batches(input_data)
+    processed_items = await processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert len(results) == len(input_data)
-    assert all(result.startswith("Processed:") for result in results)
+    assert all(keys in values for keys, values in processed_items.items())
+    assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
 @pytest.mark.asyncio
@@ -144,11 +144,11 @@ async def test_async_batch_processor_checkpoint(input_data, temp_pickle_file):
         pickle_file=temp_pickle_file,
         recover_from_checkpoint=True,
     )
-    processed_items, results = await processor2.process_items_in_batches(input_data)
+    processed_items = await processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert len(results) == len(input_data)
-    assert all(result.startswith("Processed:") for result in results)
+    assert all(keys in values for keys, values in processed_items.items())
+    assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
 def test_tqdm_usage(capsys, input_data):

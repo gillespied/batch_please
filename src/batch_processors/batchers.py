@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import pickle
-from typing import Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Callable, Dict, Generic, Iterable, List, Optional, TypeVar
 
 from tqdm import tqdm
 
@@ -185,7 +185,7 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
         Initialize the AsyncBatchProcessor.
 
         Args:
-            process_func (Callable[[T], R]): The function to process each item.
+            process_func (Callable[[T], Awaitable[R]]): The async function to process each item.
             batch_size (int, optional): The number of items to process in each batch. Defaults to 100.
             pickle_file (Optional[str], optional): The file to use for saving/loading progress. Defaults to None.
             logfile (Optional[str], optional): The file to use for logging. Defaults to None.
@@ -245,17 +245,17 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             for i, item in enumerate(batch)
         ]
 
-        batch_results = []
+        batch_results = {}
         for task in asyncio.as_completed(tasks):
             result = await task
-            batch_results.append(result)
+            batch_results[str(result)] = result
             if self.use_tqdm:
                 pbar.update(1)
 
         if self.use_tqdm:
             pbar.close()
 
-        self.processed_items.update(batch)
+        self.processed_items.update(batch_results)
 
         if self.pickle_file:
             self.save_progress()
@@ -264,9 +264,7 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             f"Batch {batch_number} completed. Total processed: {len(self.processed_items)}/{total_jobs}"
         )
 
-    async def process_items_in_batches(
-        self, input_items: Iterable[T]
-    ) -> Tuple[List[T], List[R]]:
+    async def process_items_in_batches(self, input_items: Iterable[T]) -> Dict[str, R]:
         """
         Process all input items in batches asynchronously.
 
@@ -274,13 +272,16 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             input_items (Iterable[T]): The items to process.
 
         Returns:
-            Tuple[List[T], List[R]]: A tuple containing the list of processed items and their results.
+            Dict[str, R]: A dictionary containing the processed items and their results.
         """
         input_items = list(input_items)  # Convert iterable to list
-        total_jobs = len(input_items)
-        start_index = len(self.processed_items) if self.recover_from_checkpoint else 0
+        if self.recover_from_checkpoint:
+            recovered_items = set(self.processed_items.keys())
+            input_items = list(set(map(str, input_items)) - recovered_items)
 
-        for i in range(start_index, total_jobs, self.batch_size):
+        total_jobs = len(input_items)
+
+        for i in range(0, total_jobs, self.batch_size):
             batch = input_items[i : i + self.batch_size]
             await self.process_batch(batch, i // self.batch_size + 1, total_jobs)
 
