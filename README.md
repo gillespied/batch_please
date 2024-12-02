@@ -34,7 +34,7 @@ processor = BatchProcessor(
 )
 
 input_data = range(1000)
-processed_items, results = processor.process_items_in_batches(input_data)
+processed_items = processor.process_items_in_batches(input_data)
 ```
 
 ### Asynchronous Processing
@@ -56,7 +56,7 @@ async def main():
     )
 
     input_data = range(1000)
-    processed_items, results = await processor.process_items_in_batches(input_data)
+    processed_items = await processor.process_items_in_batches(input_data)
 
 asyncio.run(main())
 ```
