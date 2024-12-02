@@ -30,6 +30,7 @@ setup(
     ],
     extras_require={
         "dev": [
+            "build",
             "pytest",
             "pytest-asyncio",
             "mkdocs",
