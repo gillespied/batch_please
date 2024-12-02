@@ -37,8 +37,6 @@ dev = [
 
 [tool.setuptools_scm]
 write_to = "src/batch_please/_version.py"
-version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
 
 [tool.setuptools.packages.find]
 where = ["src"]
