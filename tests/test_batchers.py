@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from batch_processors.batchers import AsyncBatchProcessor, BatchProcessor
+from batch_please.batchers import AsyncBatchProcessor, BatchProcessor
 
 
 def sync_process_func(item: int) -> str:

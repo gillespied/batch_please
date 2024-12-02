@@ -22,7 +22,7 @@ pip install batch_please
 ### Synchronous Processing
 
 ```python
-from batch_processors import BatchProcessor
+from batch_please import BatchProcessor
 
 def process_func(item):
     return f"Processed: {item}"
@@ -41,7 +41,7 @@ processed_items = processor.process_items_in_batches(input_data)
 
 ```python
 import asyncio
-from batch_processors import AsyncBatchProcessor
+from batch_please import AsyncBatchProcessor
 
 async def async_process_func(item):
     await asyncio.sleep(0.1)

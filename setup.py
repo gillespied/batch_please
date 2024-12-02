@@ -21,7 +21,7 @@ setup(
     ],
     python_requires=">=3.8",
     use_scm_version={
-        "write_to": "src/batch_processors/_version.py",
+        "write_to": "src/batch_please/_version.py",
     },
     setup_requires=["setuptools_scm"],
     install_requires=[
