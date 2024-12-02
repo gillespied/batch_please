@@ -53,6 +53,7 @@ def test_batch_processor_process_items(input_data):
     processed_items = processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
+    assert set(processed_items.keys()) == set(map(str, input_data))
     assert all(keys in values for keys, values in processed_items.items())
     assert all(result.startswith("Processed:") for result in processed_items.values())
 
@@ -80,6 +81,7 @@ def test_batch_processor_checkpoint(input_data, temp_pickle_file):
     processed_items = processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
+    assert set(processed_items.keys()) == set(map(str, input_data))
     assert all(keys in values for keys, values in processed_items.items())
     assert all(result.startswith("Processed:") for result in processed_items.values())
 
@@ -96,6 +98,7 @@ async def test_async_batch_processor_process_items(input_data):
     processed_items = await processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
+    assert set(processed_items.keys()) == set(map(str, input_data))
     assert all(keys in values for keys, values in processed_items.items())
     assert all(result.startswith("Processed:") for result in processed_items.values())
 
@@ -147,6 +150,7 @@ async def test_async_batch_processor_checkpoint(input_data, temp_pickle_file):
     processed_items = await processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
+    assert set(processed_items.keys()) == set(map(str, input_data))
     assert all(keys in values for keys, values in processed_items.items())
     assert all(result.startswith("Processed:") for result in processed_items.values())
 

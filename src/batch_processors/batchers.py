@@ -2,7 +2,17 @@ import asyncio
 import logging
 import os
 import pickle
-from typing import Callable, Dict, Generic, Iterable, List, Optional, TypeVar
+from typing import (
+    Awaitable,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 from tqdm import tqdm
 
@@ -173,7 +183,7 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
 
     def __init__(
         self,
-        process_func: Callable[[T], R],
+        process_func: Callable[[T], Awaitable[R]],
         batch_size: int = 100,
         pickle_file: Optional[str] = None,
         logfile: Optional[str] = None,
@@ -205,7 +215,7 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             asyncio.Semaphore(max_concurrent) if max_concurrent is not None else None
         )
 
-    async def process_item(self, job_number: int, item: T) -> R:
+    async def process_item(self, job_number: int, item: T) -> Tuple[T, R]:
         """
         Process a single item asynchronously.
 
@@ -214,13 +224,13 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             item (T): The item to process.
 
         Returns:
-            R: The result of processing the item.
+            Tuple[T, R]: A tuple containing the input item and the result of processing it.
         """
 
         async def _process():
             result = await self.process_func(item)
             self.logger.info(f"Processed job {job_number}: {item}")
-            return result
+            return item, result
 
         if self.semaphore:
             async with self.semaphore:
@@ -247,8 +257,8 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
 
         batch_results = {}
         for task in asyncio.as_completed(tasks):
-            result = await task
-            batch_results[str(result)] = result
+            item, result = await task
+            batch_results[str(item)] = result
             if self.use_tqdm:
                 pbar.update(1)
 
@@ -277,7 +287,9 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
         input_items = list(input_items)  # Convert iterable to list
         if self.recover_from_checkpoint:
             recovered_items = set(self.processed_items.keys())
-            input_items = list(set(map(str, input_items)) - recovered_items)
+            input_items = [
+                item for item in input_items if str(item) not in recovered_items
+            ]
 
         total_jobs = len(input_items)
 
