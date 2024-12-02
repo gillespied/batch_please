@@ -50,11 +50,11 @@ def test_batch_processor_process_items(input_data):
     and returns the expected results.
     """
     processor = BatchProcessor(sync_process_func, batch_size=10)
-    processed_items, results = processor.process_items_in_batches(input_data)
+    processed_items = processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert len(results) == len(input_data)
-    assert all(result.startswith("Processed:") for result in results)
+    assert all(keys in values for keys, values in processed_items.items())
+    assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
 def test_batch_processor_checkpoint(input_data, temp_pickle_file):
@@ -77,11 +77,11 @@ def test_batch_processor_checkpoint(input_data, temp_pickle_file):
         pickle_file=temp_pickle_file,
         recover_from_checkpoint=True,
     )
-    processed_items, results = processor2.process_items_in_batches(input_data)
+    processed_items = processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert len(results) == len(input_data)
-    assert all(result.startswith("Processed:") for result in results)
+    assert all(keys in values for keys, values in processed_items.items())
+    assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
 @pytest.mark.asyncio

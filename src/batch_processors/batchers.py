@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import pickle
-from typing import Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar
 
 from tqdm import tqdm
 
@@ -51,8 +51,7 @@ class BatchProcessor(Generic[T, R]):
         self.process_func = process_func
         self.batch_size = batch_size
         self.pickle_file = pickle_file
-        self.processed_items: List[T] = []
-        self.results: List[R] = []
+        self.processed_items: Dict[str, R] = {}
         self.recover_from_checkpoint = recover_from_checkpoint
         self.use_tqdm = use_tqdm
 
@@ -97,15 +96,16 @@ class BatchProcessor(Generic[T, R]):
             total_jobs (int): The total number of jobs to process.
         """
         if self.use_tqdm:
-            batch_results = [
-                self.process_item(i, item)
+            batch_results = {
+                str(item): self.process_item(i, item)
                 for i, item in enumerate(tqdm(batch, desc=f"Batch {batch_number}"))
-            ]
+            }
         else:
-            batch_results = [self.process_item(i, item) for i, item in enumerate(batch)]
+            batch_results = {
+                str(item): self.process_item(i, item) for i, item in enumerate(batch)
+            }
 
-        self.processed_items.extend(batch)
-        self.results.extend(batch_results)
+        self.processed_items.update(batch_results)
 
         if self.pickle_file:
             self.save_progress()
@@ -121,8 +121,7 @@ class BatchProcessor(Generic[T, R]):
         if self.pickle_file and os.path.exists(self.pickle_file):
             with open(self.pickle_file, "rb") as f:
                 data = pickle.load(f)
-                self.processed_items = data["processed_items"]
-                self.results = data["results"]
+                self.processed_items = data
             self.logger.info(
                 f"Recovered {len(self.processed_items)} items from checkpoint"
             )
@@ -137,13 +136,11 @@ class BatchProcessor(Generic[T, R]):
         """
         with open(self.pickle_file, "wb") as f:
             pickle.dump(
-                {"processed_items": self.processed_items, "results": self.results},
+                self.processed_items,
                 f,
             )
 
-    def process_items_in_batches(
-        self, input_items: Iterable[T]
-    ) -> Tuple[List[T], List[R]]:
+    def process_items_in_batches(self, input_items: Iterable[T]) -> Dict[str, R]:
         """
         Process all input items in batches.
 
@@ -154,14 +151,17 @@ class BatchProcessor(Generic[T, R]):
             Tuple[List[T], List[R]]: A tuple containing the list of processed items and their results.
         """
         input_items = list(input_items)  # Convert iterable to list
-        total_jobs = len(input_items)
-        start_index = len(self.processed_items) if self.recover_from_checkpoint else 0
+        if self.recover_from_checkpoint:
+            recovered_items = set(self.processed_items.keys())
+            input_items = list(set(input_items) - recovered_items)
 
-        for i in range(start_index, total_jobs, self.batch_size):
+        total_jobs = len(input_items)
+
+        for i in range(0, total_jobs, self.batch_size):
             batch = input_items[i : i + self.batch_size]
             self.process_batch(batch, i // self.batch_size + 1, total_jobs)
 
-        return self.processed_items, self.results
+        return self.processed_items
 
 
 class AsyncBatchProcessor(BatchProcessor[T, R]):
@@ -255,8 +255,7 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
         if self.use_tqdm:
             pbar.close()
 
-        self.processed_items.extend(batch)
-        self.results.extend(batch_results)
+        self.processed_items.update(batch)
 
         if self.pickle_file:
             self.save_progress()
@@ -285,4 +284,4 @@ class AsyncBatchProcessor(BatchProcessor[T, R]):
             batch = input_items[i : i + self.batch_size]
             await self.process_batch(batch, i // self.batch_size + 1, total_jobs)
 
-        return self.processed_items, self.results
+        return self.processed_items
