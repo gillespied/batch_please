@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from batch_please.batchers import AsyncBatchProcessor, BatchProcessor
+from batch_processors.batchers import AsyncBatchProcessor, BatchProcessor
 
 
 def sync_process_func(item: int) -> str:
@@ -50,12 +50,11 @@ def test_batch_processor_process_items(input_data):
     and returns the expected results.
     """
     processor = BatchProcessor(sync_process_func, batch_size=10)
-    processed_items = processor.process_items_in_batches(input_data)
+    processed_items, results = processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert set(processed_items.keys()) == set(map(str, input_data))
-    assert all(keys in values for keys, values in processed_items.items())
-    assert all(result.startswith("Processed:") for result in processed_items.values())
+    assert len(results) == len(input_data)
+    assert all(result.startswith("Processed:") for result in results)
 
 
 def test_batch_processor_checkpoint(input_data, temp_pickle_file):
@@ -78,12 +77,11 @@ def test_batch_processor_checkpoint(input_data, temp_pickle_file):
         pickle_file=temp_pickle_file,
         recover_from_checkpoint=True,
     )
-    processed_items = processor2.process_items_in_batches(input_data)
+    processed_items, results = processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert set(processed_items.keys()) == set(map(str, input_data))
-    assert all(keys in values for keys, values in processed_items.items())
-    assert all(result.startswith("Processed:") for result in processed_items.values())
+    assert len(results) == len(input_data)
+    assert all(result.startswith("Processed:") for result in results)
 
 
 @pytest.mark.asyncio
@@ -95,12 +93,11 @@ async def test_async_batch_processor_process_items(input_data):
     asynchronously and returns the expected results.
     """
     processor = AsyncBatchProcessor(async_process_func, batch_size=10)
-    processed_items = await processor.process_items_in_batches(input_data)
+    processed_items, results = await processor.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert set(processed_items.keys()) == set(map(str, input_data))
-    assert all(keys in values for keys, values in processed_items.items())
-    assert all(result.startswith("Processed:") for result in processed_items.values())
+    assert len(results) == len(input_data)
+    assert all(result.startswith("Processed:") for result in results)
 
 
 @pytest.mark.asyncio
@@ -147,12 +144,11 @@ async def test_async_batch_processor_checkpoint(input_data, temp_pickle_file):
         pickle_file=temp_pickle_file,
         recover_from_checkpoint=True,
     )
-    processed_items = await processor2.process_items_in_batches(input_data)
+    processed_items, results = await processor2.process_items_in_batches(input_data)
 
     assert len(processed_items) == len(input_data)
-    assert set(processed_items.keys()) == set(map(str, input_data))
-    assert all(keys in values for keys, values in processed_items.items())
-    assert all(result.startswith("Processed:") for result in processed_items.values())
+    assert len(results) == len(input_data)
+    assert all(result.startswith("Processed:") for result in results)
 
 
 def test_tqdm_usage(capsys, input_data):
