@@ -14,7 +14,13 @@ from typing import (
     TypeVar,
 )
 
-from tqdm import tqdm
+# Try importing the notebook-compatible tqdm
+# Fallback to the standard tqdm if the notebook version is unavailable
+try:
+    from tqdm.notebook import tqdm
+except ImportError:
+    from tqdm import tqdm
+
 
 # define some type generics
 T = TypeVar("T")  # Type variable for input items
