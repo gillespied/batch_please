@@ -14,29 +14,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
- 
-  publish-docs:
-    name: Build and Deploy Docs to GitHub Pages
+  build-docs:
     runs-on: ubuntu-latest
-
-       steps:
+    steps:
       - uses: actions/checkout@v4
-
-      - name: Set up uv
+      - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
-
-      - name: Cache uv
-        uses: actions/cache@v4
+      - name: Install dependencies
+        run: uv sync --extras dev
+      - name: Build documentation
+        run: uv run mkdocs build --clean --strict
+      - name: Check build result
+        run: |
+          if [ ! -d "site" ]; then
+            echo "Documentation build failed"
+            exit 1
+          fi
+      - name: Upload built docs as artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: ~/.cache/uv
-          key: uv-cache-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          name: github-pages
+          path: site/
 
-      - name: Sync all dependencies (prod + dev)
-        run: uv sync --extra dev
+  deploy-docs:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
-      - name: Build MkDocs site
-        run: uv run mkdocs build --strict
-        
+    steps:
+      - name: Remove old site directory
+        run: rm -rf site
+
+      - name: Download built docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: site/
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
+
   publish-pypi:
     name: Publish Package to PyPI
     runs-on: ubuntu-latest
