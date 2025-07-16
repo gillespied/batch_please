@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import Dict, List
 
 import pytest
 
@@ -21,6 +21,28 @@ async def async_process_func(item: int) -> str:
 def input_data() -> List[int]:
     """Fixture to provide input data for tests."""
     return list(range(100))
+
+
+@pytest.fixture
+def input_data_dict() -> Dict[str, Dict[str, int]]:
+    """Fixture to provide dictionary input data for tests."""
+    return {f"item_{i}": {"value": i} for i in range(100)}
+
+
+@pytest.fixture
+def empty_dict() -> Dict:
+    """Fixture to provide an empty dictionary for tests."""
+    return {}
+
+
+@pytest.fixture
+def mixed_dict() -> Dict:
+    """Fixture to provide a dictionary with mixed value types for tests."""
+    return {
+        "item_1": {"value": 1},  # Dictionary to unpack
+        "item_2": 2,  # Non-dictionary value
+        "item_3": {"nested": {"value": 3}},  # Nested dictionary
+    }
 
 
 @pytest.fixture
@@ -52,10 +74,48 @@ def test_batch_processor_process_items(input_data):
     processor = BatchProcessor(sync_process_func, batch_size=10)
     processed_items = processor.process_items_in_batches(input_data)
 
+    # Verify correct number of results returned
     assert len(processed_items) == len(input_data)
+
+    # Verify the keys in the result dict are string versions of input items
     assert set(processed_items.keys()) == set(map(str, input_data))
+
+    # Verify each key (input item) is contained in its processed value
+    # This works because sync_process_func returns f"Processed: {item}"
     assert all(keys in values for keys, values in processed_items.items())
+
+    # Verify all results have expected format
     assert all(result.startswith("Processed:") for result in processed_items.values())
+
+
+def dict_process_func(value):
+    """A function that processes a dictionary with a 'value' key."""
+    return f"Processed: {value}"
+
+
+def test_batch_processor_with_dict_input(input_data_dict):
+    """
+    Test the processing of dictionary inputs using BatchProcessor.
+
+    This test checks if the BatchProcessor correctly processes all dictionary input items
+    and returns the expected results with the original keys preserved.
+    """
+    processor = BatchProcessor(dict_process_func, batch_size=10)
+    processed_items = processor.process_items_in_batches(input_data_dict)
+
+    # Verify correct number of results returned
+    assert len(processed_items) == len(input_data_dict)
+
+    # Verify the original dictionary keys are preserved
+    assert set(processed_items.keys()) == set(input_data_dict.keys())
+
+    # Verify all results have expected format
+    assert all(result.startswith("Processed:") for result in processed_items.values())
+
+    # Check that the values were correctly processed with dict_process_func
+    # which extracts and processes the 'value' key from each dictionary
+    for key, value in input_data_dict.items():
+        assert processed_items[key] == f"Processed: {value['value']}"
 
 
 def test_batch_processor_checkpoint(input_data, temp_pickle_file):
@@ -80,9 +140,17 @@ def test_batch_processor_checkpoint(input_data, temp_pickle_file):
     )
     processed_items = processor2.process_items_in_batches(input_data)
 
+    # Verify correct number of results for all input items
     assert len(processed_items) == len(input_data)
+
+    # Verify all keys are present (from both first and second processor runs)
     assert set(processed_items.keys()) == set(map(str, input_data))
+
+    # Verify each key (input item) is contained in its processed value
+    # This works because sync_process_func returns f"Processed: {item}"
     assert all(keys in values for keys, values in processed_items.items())
+
+    # Verify all results have expected format
     assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
@@ -97,10 +165,50 @@ async def test_async_batch_processor_process_items(input_data):
     processor = AsyncBatchProcessor(async_process_func, batch_size=10)
     processed_items = await processor.process_items_in_batches(input_data)
 
+    # Verify correct number of results returned
     assert len(processed_items) == len(input_data)
+
+    # Verify the keys in the result dict are string versions of input items
     assert set(processed_items.keys()) == set(map(str, input_data))
+
+    # Verify each key (input item) is contained in its processed value
+    # This works because async_process_func returns f"Processed: {item}"
     assert all(keys in values for keys, values in processed_items.items())
+
+    # Verify all results have expected format
     assert all(result.startswith("Processed:") for result in processed_items.values())
+
+
+async def async_dict_process_func(value):
+    """An async function that processes a dictionary with a 'value' key."""
+    await asyncio.sleep(0.01)  # Simulate some async work
+    return f"Processed: {value}"
+
+
+@pytest.mark.asyncio
+async def test_async_batch_processor_with_dict_input(input_data_dict):
+    """
+    Test the processing of dictionary inputs using AsyncBatchProcessor.
+
+    This test checks if the AsyncBatchProcessor correctly processes all dictionary input items
+    asynchronously and returns the expected results with the original keys preserved.
+    """
+    processor = AsyncBatchProcessor(async_dict_process_func, batch_size=10)
+    processed_items = await processor.process_items_in_batches(input_data_dict)
+
+    # Verify correct number of results returned
+    assert len(processed_items) == len(input_data_dict)
+
+    # Verify the original dictionary keys are preserved
+    assert set(processed_items.keys()) == set(input_data_dict.keys())
+
+    # Verify all results have expected format
+    assert all(result.startswith("Processed:") for result in processed_items.values())
+
+    # Check that the values were correctly processed with async_dict_process_func
+    # which extracts and processes the 'value' key from each dictionary
+    for key, value in input_data_dict.items():
+        assert processed_items[key] == f"Processed: {value['value']}"
 
 
 @pytest.mark.asyncio
@@ -149,9 +257,17 @@ async def test_async_batch_processor_checkpoint(input_data, temp_pickle_file):
     )
     processed_items = await processor2.process_items_in_batches(input_data)
 
+    # Verify correct number of results for all input items
     assert len(processed_items) == len(input_data)
+
+    # Verify all keys are present (from both first and second processor runs)
     assert set(processed_items.keys()) == set(map(str, input_data))
+
+    # Verify each key (input item) is contained in its processed value
+    # This works because async_process_func returns f"Processed: {item}"
     assert all(keys in values for keys, values in processed_items.items())
+
+    # Verify all results have expected format
     assert all(result.startswith("Processed:") for result in processed_items.values())
 
 
@@ -163,6 +279,20 @@ def test_tqdm_usage(capsys, input_data):
     """
     processor = BatchProcessor(sync_process_func, batch_size=10, use_tqdm=True)
     processor.process_items_in_batches(input_data)
+
+    captured = capsys.readouterr()
+    assert "Batch 1" in captured.err  # tqdm output goes to stderr
+
+
+def test_tqdm_usage_with_dict_input(capsys, input_data_dict):
+    """
+    Test the tqdm progress bar functionality with dictionary input.
+
+    This test checks if the tqdm progress bar is displayed when use_tqdm is set to True
+    and a dictionary input is provided.
+    """
+    processor = BatchProcessor(dict_process_func, batch_size=10, use_tqdm=True)
+    processor.process_items_in_batches(input_data_dict)
 
     captured = capsys.readouterr()
     assert "Batch 1" in captured.err  # tqdm output goes to stderr

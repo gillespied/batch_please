@@ -1,51 +1,66 @@
-name: Publish to PyPI
+name: Release
 
 on:
   push:
     tags:
-      - "v*.*.*"  # Matches version tags like v1.2.3
+      - "v*.*.*"
 
 permissions:
   contents: read
-  id-token: write  # Required for OIDC authentication
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  publish:
+  publish-docs:
+    name: Deploy Docs to GitHub Pages
     runs-on: ubuntu-latest
-    environment: release 
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # This ensures all tags are fetched
+      - uses: actions/download-artifact@v3
+        with:
+          name: mkdocs-site
+          path: site/
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"  
+      - name: Configure Pages
+        uses: actions/configure-pages@v3
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: site/
 
-    - name: Check directory contents
-      run: |
-        pwd
-        ls -la
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
 
-    - name: Build package
-      run: python -m build --sdist --wheel --outdir dist/
+  publish-pypi:
+    name: Publish Package to PyPI
+    runs-on: ubuntu-latest
+    needs: publish-docs
 
-    - name: List built distributions
-      run: ls -l dist/
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - name: Check the built package
-      run: twine check dist/*
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
 
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        packages-dir: dist/
-        verbose: true
+      - name: Sync only production dependencies
+        run: uv sync --no-dev
+
+      - name: Build package
+        run: uv build --sdist --wheel --outdir dist/
+
+      - name: Check distributions
+        run: |
+          ls -l dist/
+          twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          verbose: true
