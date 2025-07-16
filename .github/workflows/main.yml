@@ -66,7 +66,7 @@ jobs:
           key: uv-cache-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Sync all dependencies (prod + dev)
-        run: uv sync
+        run: uv sync --extra dev
 
       - name: Build MkDocs site
         run: uv run mkdocs build --strict
