@@ -43,13 +43,13 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v6
 
       - name: Cache uv
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/uv
           key: uv-cache-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
@@ -61,7 +61,7 @@ jobs:
         run: uv run mkdocs build --strict
 
       - name: Upload site artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mkdocs-site
           path: site/
