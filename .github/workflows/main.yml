@@ -2,36 +2,77 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint-test:
+    name: Lint & Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: [3.8, 3.9, 3.10, 3.11, 3.12]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install .[dev]
-    - name: Run tests
-      run: pytest
-    - name: Build documentation
-      run: mkdocs build --strict
-    - name: Check build result
-      run: |
-        if [ ! -d "site" ]; then
-          echo "Documentation build failed"
-          exit 1
-        fi
-    - name: Run Ruff
-      uses: chartboost/ruff-action@v1
+      - uses: actions/checkout@v3
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Cache uv
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/uv
+          key: uv-cache-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Sync all dependencies (prod + dev)
+        run: uv sync
+
+      - name: Run Ruff
+        run: uv run ruff check .
+
+      - name: Run pytest
+        run: uv run pytest
+
+  docs:
+    name: Build & Upload Docs
+    needs: lint-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    concurrency:
+      group: docs-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Cache uv
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/uv
+          key: uv-cache-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Sync all dependencies (prod + dev)
+        run: uv sync
+
+      - name: Build MkDocs site
+        run: uv run mkdocs build --strict
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mkdocs-site
+          path: site/
