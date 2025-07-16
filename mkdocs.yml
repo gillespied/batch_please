@@ -10,15 +10,6 @@ plugins:
   - search
   - mkdocstrings:
       default_handler: python
-      handlers:
-        python:
-          setup_commands:
-            - import sys
-            - sys.path.append("src")
-          selection:
-            docstring_style: google
-          rendering:
-            show_source: true
 
 watch:
   - src/batch_please
