@@ -63,6 +63,12 @@ jobs:
   publish-pypi:
     name: Publish Package to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/batch-please
+
+    permissions:
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
