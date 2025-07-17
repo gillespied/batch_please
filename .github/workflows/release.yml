@@ -1,6 +1,7 @@
-name: Release
+name: Deploy Documentation and Publish Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
@@ -15,8 +16,6 @@ concurrency:
 
 jobs:
   build-docs:
-    environment:
-      name: github-pages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +38,6 @@ jobs:
           path: site/
 
   deploy-docs:
-    environment:
-      name: github-pages
     needs: build-docs
     runs-on: ubuntu-latest
     permissions:

@@ -163,3 +163,4 @@ cython_debug/
 .DS_Store
 .vscode
 src/batch_please/_version.py
+.artifacts/
