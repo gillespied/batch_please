@@ -63,7 +63,6 @@ jobs:
   publish-pypi:
     name: Publish Package to PyPI
     runs-on: ubuntu-latest
-    needs: deploy-docs
 
     steps:
       - uses: actions/checkout@v4
@@ -74,10 +73,10 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Sync only production dependencies
-        run: uv sync --no-dev
+        run: uv sync --extra dev
 
       - name: Build package
-        run: uv build --sdist --wheel --outdir dist/
+        run: uv build --sdist --wheel --out-dir dist/
 
       - name: Check distributions
         run: |
